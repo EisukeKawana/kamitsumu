@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>神ツム∞ KAMITSUMU</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -107,6 +108,84 @@ canvas { cursor:none; border-radius:14px; }
 #continue-btn:disabled { opacity:.3; cursor:default; }
 #replay-btn-go { background:rgba(255,255,255,.08); color:rgba(255,255,255,.7); border:1px solid rgba(255,255,255,.15); font-size:13px; }
 #coin-note { font-size:10px; color:#555; margin-top:10px; }
+#submit-status { font-size:10px; color:#666; text-align:center; margin-top:6px; min-height:14px; }
+
+/* ────────── ユーザー名モーダル ────────── */
+#username-modal {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center;
+}
+#username-modal.visible { display:flex; }
+#username-box {
+  background:linear-gradient(145deg,rgba(10,8,24,.98),rgba(20,5,35,.98));
+  border:1px solid rgba(255,110,199,.45); border-radius:22px;
+  padding:36px 36px 28px; text-align:center; width:320px;
+  animation:goIn .35s cubic-bezier(.175,.885,.32,1.275);
+}
+#username-box h2 { color:#ff6ec7; font-size:17px; margin-bottom:8px; letter-spacing:2px; }
+#username-box p  { color:rgba(255,255,255,.45); font-size:11px; line-height:1.7; margin-bottom:20px; }
+#username-input {
+  width:100%; padding:12px 16px; border-radius:12px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.18);
+  color:#fff; font-size:17px; text-align:center; outline:none;
+  font-family:inherit; letter-spacing:1px; margin-bottom:4px;
+  transition:border-color .2s;
+}
+#username-input:focus { border-color:#ff6ec7; box-shadow:0 0 0 2px rgba(255,110,199,.18); }
+#username-hint { font-size:10px; color:#444; margin-bottom:16px; }
+#username-submit {
+  width:100%; padding:13px; border-radius:24px; border:none;
+  background:linear-gradient(90deg,#ff6ec7,#ffd700); color:#000;
+  font-size:15px; font-weight:900; cursor:pointer; transition:all .2s; letter-spacing:1px;
+}
+#username-submit:hover:not(:disabled) { transform:scale(1.03); }
+#username-submit:disabled { opacity:.5; cursor:default; }
+#username-error { font-size:11px; color:#f66; margin-top:10px; min-height:16px; }
+
+/* ────────── ランキングボタン ────────── */
+#ranking-btn {
+  position:fixed; top:10px; left:14px;
+  background:rgba(255,215,0,.12); border:1px solid rgba(255,215,0,.3);
+  color:#ffd700; padding:5px 14px; border-radius:20px;
+  cursor:pointer; font-size:13px; font-weight:bold;
+  transition:all .2s; letter-spacing:.5px; z-index:200;
+}
+#ranking-btn:hover { background:rgba(255,215,0,.26); }
+
+/* ────────── ランキングパネル ────────── */
+#ranking-panel {
+  display:none; position:fixed; inset:0; z-index:400;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center;
+}
+#ranking-panel.visible { display:flex; }
+#ranking-box {
+  background:linear-gradient(145deg,rgba(10,8,24,.98),rgba(20,5,35,.98));
+  border:1px solid rgba(255,215,0,.3); border-radius:20px;
+  padding:26px 28px; width:360px; max-height:82vh; overflow-y:auto;
+  animation:goIn .3s cubic-bezier(.175,.885,.32,1.275);
+}
+#ranking-box h2 { color:#ffd700; font-size:15px; letter-spacing:3px; text-align:center; margin-bottom:3px; }
+#ranking-subtitle { font-size:10px; color:#555; text-align:center; margin-bottom:16px; letter-spacing:1px; }
+.rank-row {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:10px; margin-bottom:3px;
+}
+.rank-row:hover { background:rgba(255,255,255,.04); }
+.rank-row.me { background:rgba(255,215,0,.07); border:1px solid rgba(255,215,0,.2); }
+.rank-no { font-size:13px; font-weight:bold; color:#555; width:26px; text-align:center; flex-shrink:0; }
+.rank-no.top3 { font-size:16px; }
+.rank-name { flex:1; font-size:13px; color:#cdd6f4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rank-badge { font-size:9px; color:#666; flex-shrink:0; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rank-score { font-size:13px; font-weight:bold; color:#ffd700; flex-shrink:0; }
+#ranking-my-pos { font-size:11px; color:#ff6ec7; text-align:center; margin-top:12px; min-height:14px; }
+#ranking-close {
+  display:block; width:100%; margin-top:14px; padding:10px; border-radius:20px;
+  background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.1);
+  color:rgba(255,255,255,.6); font-size:13px; cursor:pointer; transition:all .15s;
+}
+#ranking-close:hover { background:rgba(255,255,255,.13); }
 
 /* ────────── 録音パネル ────────── */
 #rec-panel {
@@ -255,8 +334,35 @@ canvas { cursor:none; border-radius:14px; }
   <button class="go-btn" id="share-x-btn" onclick="shareToX()">𝕏 このスコアでXを煽る</button>
   <button class="go-btn" id="continue-btn" onclick="doContinue()">▶ コンティニュー（💰30）</button>
   <button class="go-btn" id="replay-btn-go" onclick="doReplay()">悔しいのでもう一回</button>
+  <div id="submit-status"></div>
   <div id="coin-note"></div>
 </div>
+
+<!-- ユーザー名モーダル -->
+<div id="username-modal">
+  <div id="username-box">
+    <h2>🎮 プレイヤー名を入力</h2>
+    <p>ランキングに表示される名前です<br>16文字以内・あとから変更不可</p>
+    <input id="username-input" type="text" maxlength="16" placeholder="例: ドーパミン太郎" autocomplete="off" spellcheck="false" />
+    <div id="username-hint">ひらがな・英数字・絵文字なんでもOK</div>
+    <button id="username-submit" onclick="registerPlayer()">▶ ゲームスタート</button>
+    <div id="username-error"></div>
+  </div>
+</div>
+
+<!-- ランキングパネル -->
+<div id="ranking-panel">
+  <div id="ranking-box">
+    <h2>🏆 WORLD RANKING</h2>
+    <div id="ranking-subtitle">プレイヤーごとのベストスコア TOP 20</div>
+    <div id="ranking-list"></div>
+    <div id="ranking-my-pos"></div>
+    <button id="ranking-close" onclick="hideRanking()">✕ 閉じる</button>
+  </div>
+</div>
+
+<!-- ランキングボタン -->
+<button id="ranking-btn" onclick="showRanking()">🏆 ランキング</button>
 
 <!-- 録音パネル -->
 <div id="rec-panel">
@@ -1272,7 +1378,10 @@ function endGame(){
       cb.textContent=`コンティニュー不可（💰${coins}/30）`;
     }
     document.getElementById('coin-note').textContent=`💰 ${coins}コイン所持 ─ チェーンを繋ぐと貯まる`;
+    document.getElementById('submit-status').textContent='';
     document.getElementById('gameover-ui').style.display='block';
+    // Supabaseにスコアを送信
+    submitScore(s, t);
   },2500);
 }
 function _resetGame(){
@@ -1520,9 +1629,104 @@ document.addEventListener('keydown',e=>{
 });
 
 // ════════════════════════════════════════
+// SUPABASE: ランキング + アカウント
+// ════════════════════════════════════════
+const SUPA_URL='https://cpxkjpzeykjjcjmhcmqh.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNweGtqcHpleWtqamNqbWhjbXFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNTg4OTQsImV4cCI6MjA4ODYzNDg5NH0.nTCfu6rpAUDFS2qWTmEJXKd5_mzCXWPdV5curXfICOQ';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+// localStorage からプレイヤー情報を復元
+let player=JSON.parse(localStorage.getItem('kamitsumu_player')||'null');
+
+function initPlayer(){
+  if(!player){
+    document.getElementById('username-modal').classList.add('visible');
+    setTimeout(()=>document.getElementById('username-input').focus(),100);
+  }
+}
+
+async function registerPlayer(){
+  const input=document.getElementById('username-input');
+  const name=input.value.trim();
+  const err=document.getElementById('username-error');
+  const btn=document.getElementById('username-submit');
+  err.textContent='';
+  if(!name){err.textContent='名前を入力してください';return;}
+  btn.textContent='登録中…'; btn.disabled=true;
+  const id=crypto.randomUUID();
+  const {error}=await db.from('players').insert({id,username:name});
+  if(error){
+    btn.textContent='▶ ゲームスタート'; btn.disabled=false;
+    err.textContent=error.code==='23505'?'その名前はすでに使われています':'エラーが発生しました。もう一度お試しを';
+    return;
+  }
+  player={id,username:name};
+  localStorage.setItem('kamitsumu_player',JSON.stringify(player));
+  document.getElementById('username-modal').classList.remove('visible');
+}
+
+// Enterキーで登録
+document.getElementById('username-input').addEventListener('keydown',e=>{
+  if(e.key==='Enter') registerPlayer();
+});
+
+async function submitScore(s,t){
+  if(!player) return;
+  document.getElementById('submit-status').textContent='送信中…';
+  const {error}=await db.from('scores').insert({
+    player_id:player.id, username:player.username,
+    score:Math.floor(s), title:t.title,
+  });
+  document.getElementById('submit-status').textContent=
+    error ? '⚠ 送信失敗（オフライン？）' : '✓ ランキングに登録しました';
+}
+
+function _esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function showRanking(){
+  document.getElementById('ranking-panel').classList.add('visible');
+  document.getElementById('ranking-list').innerHTML='<div style="text-align:center;color:#555;padding:24px">読み込み中…</div>';
+  document.getElementById('ranking-my-pos').textContent='';
+
+  // ベストスコアを200件取得してクライアント側で集計
+  const {data,error}=await db.from('scores').select('username,score,title').order('score',{ascending:false}).limit(500);
+  if(error||!data){
+    document.getElementById('ranking-list').innerHTML='<div style="text-align:center;color:#555;padding:24px">取得失敗…再度お試しください</div>';
+    return;
+  }
+  const best={};
+  data.forEach(r=>{if(!best[r.username]||r.score>best[r.username].score) best[r.username]=r;});
+  const top=Object.values(best).sort((a,b)=>b.score-a.score).slice(0,20);
+
+  if(!top.length){
+    document.getElementById('ranking-list').innerHTML='<div style="text-align:center;color:#555;padding:24px">まだスコアがありません<br>あなたが1位になるチャンス！</div>';
+    return;
+  }
+  const medals=['🥇','🥈','🥉'];
+  let myRank=-1;
+  document.getElementById('ranking-list').innerHTML=top.map((r,i)=>{
+    const isMe=player&&r.username===player.username;
+    if(isMe) myRank=i+1;
+    const no=i<3?medals[i]:`${i+1}`;
+    return `<div class="rank-row${isMe?' me':''}">
+      <span class="rank-no${i<3?' top3':''}">${no}</span>
+      <span class="rank-name">${_esc(r.username)}${isMe?' 👈':''}</span>
+      <span class="rank-badge">${_esc(r.title||'')}</span>
+      <span class="rank-score">${r.score.toLocaleString()}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('ranking-my-pos').textContent=
+    myRank>0?`あなたは現在 ${myRank}位 🎉`:
+    player?'ゲームをプレイしてランキングに載ろう！':'';
+}
+function hideRanking(){
+  document.getElementById('ranking-panel').classList.remove('visible');
+}
+
+// ════════════════════════════════════════
 // START
 // ════════════════════════════════════════
-initStars(); initGrid(); updateUI(); startTimer(); render();
+initStars(); initGrid(); updateUI(); startTimer(); render(); initPlayer();
 </script>
 </body>
 </html>
