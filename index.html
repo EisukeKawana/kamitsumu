@@ -983,18 +983,9 @@ function commitChain(){
   playBoom(len);
 
   const last=chain[chain.length-1];
-  floatTexts.push({x:tsumX(last),y:last.visualY,text:`+${pts.toLocaleString()}`,life:90,maxLife:90,vy:-2.8,scale:1+len*.04,color:hasStar?'#ffd700':'#fff'});
+  floatTexts.push({x:tsumX(last),y:last.visualY,text:`+${pts.toLocaleString()}`,life:90,maxLife:90,vy:-2.8,scale:1+len*.04,color:hasGold?'#ffd700':'#fff'});
 
-  // BOMB 処理
-  const hasBomb=chain.some(t=>t.special==='bomb');
-  let extra=[];
-  if(hasBomb){
-    const alive=tsums.filter(t=>!t.dying&&!inChain(t));
-    for(let i=0;i<Math.min(7,alive.length);i++) extra.push(alive.splice(Math.floor(Math.random()*alive.length),1)[0]);
-    warBurst(extra,7); shakeMag=Math.max(shakeMag,35);
-  }
-
-  const dying=[...chain,...extra];
+  const dying=[...chain];
   dying.forEach(t=>{t.dying=true;});
   const cols=new Set(dying.map(t=>t.col));
 
