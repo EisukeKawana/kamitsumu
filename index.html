@@ -406,7 +406,7 @@ canvas { cursor:none; border-radius:14px; display:block; }
 <div id="ranking-panel">
   <div id="ranking-box">
     <h2>🏆 WORLD RANKING</h2>
-    <div id="ranking-subtitle">プレイヤーごとのベストスコア TOP 20</div>
+    <div id="ranking-subtitle">プレイヤーごとのベストスコア TOP 50</div>
     <div id="ranking-list"></div>
     <div id="ranking-my-pos"></div>
     <button id="ranking-close" onclick="hideRanking()">✕ 閉じる</button>
@@ -449,7 +449,7 @@ canvas { cursor:none; border-radius:14px; display:block; }
       <button id="feedback-close" onclick="hideFeedback()">✕ 閉じる</button>
     </div>
     <iframe id="feedback-iframe"
-      src="https://docs.google.com/forms/d/e/PLACEHOLDER/viewform?embedded=true"
+      src="https://docs.google.com/forms/d/e/1FAIpQLSesboKK77DbD01UTrz5sJFZX1Y3gOoYy-Z5Cm7qdbMwL0h6eQ/viewform?embedded=true"
       frameborder="0" marginheight="0" marginwidth="0">読み込み中…</iframe>
   </div>
 </div>
@@ -661,9 +661,17 @@ function drawBG() {
   const bg=ctx.createLinearGradient(0,0,0,H);
   bg.addColorStop(0,`hsl(${h1},70%,${rushTime?8:5}%)`);
   bg.addColorStop(1,`hsl(${h2},80%,${rushTime?4:3}%)`);
-  ctx.fillStyle=bg; ctx.roundRect(0,0,W,H,14); ctx.fill();
-  // ネビュラ削除（Windows向け軽量化）
-  // 星: shadowBlur廃止（軽量化）、偶数フレームのみ輝度更新
+  ctx.beginPath(); ctx.roundRect(0,0,W,H,14); ctx.fillStyle=bg; ctx.fill();
+  // 軽量ネビュラ（Windows向け: radialGradientのみ・shadowBlurなし）
+  const hue=rushTime?30:fever?(hyperFever?310:280):h1+35;
+  const lum=rushTime?20:fever?15:10;
+  [[W*.28,H*.3,115],[W*.72,H*.68,100]].forEach(([nx,ny,nr])=>{
+    const n=ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+    n.addColorStop(0,`hsla(${hue},65%,${lum}%,.55)`);
+    n.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=n; ctx.fillRect(0,0,W,H);
+  });
+  // 星: shadowBlur廃止（軽量化）
   stars.forEach(s=>{
     const a=Math.max(.05,.35+Math.sin(s.tw)*.35);
     ctx.globalAlpha=a;
