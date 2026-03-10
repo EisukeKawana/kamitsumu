@@ -232,55 +232,126 @@ canvas { cursor:none; border-radius:14px; display:block; }
 }
 #ranking-close:hover { background:rgba(255,255,255,.13); }
 
-/* ────────── 録音パネル ────────── */
-#rec-panel {
-  position:fixed; bottom:20px; left:16px; width:270px;
+/* ────────── 議事録ミニボタン ────────── */
+#rec-mini {
+  position:fixed; bottom:20px; left:16px; z-index:300;
+  display:flex; align-items:center; gap:7px;
   background:rgba(6,4,18,.92); border:1px solid rgba(255,255,255,.12);
-  border-radius:14px; z-index:300; backdrop-filter:blur(10px);
-  transition:all .25s cubic-bezier(.4,0,.2,1); overflow:hidden;
-  box-shadow:0 4px 24px rgba(0,0,0,.5);
+  border-radius:24px; padding:8px 16px; cursor:pointer;
+  backdrop-filter:blur(10px); box-shadow:0 4px 20px rgba(0,0,0,.4);
+  transition:all .2s; user-select:none;
 }
-#rec-panel.collapsed { width:160px; }
-#rec-panel.collapsed #rec-body { display:none; }
-#rec-header {
-  display:flex; align-items:center; gap:8px; padding:10px 12px;
-  cursor:pointer; user-select:none; border-bottom:1px solid rgba(255,255,255,.06);
+#rec-mini:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.22); }
+#rec-mini-label { font-size:12px; color:rgba(255,255,255,.7); font-weight:bold; letter-spacing:.5px; }
+#rec-mini-time { font-size:11px; color:#ff6ec7; font-family:monospace; min-width:34px; }
+#rec-mini-dot {
+  width:7px; height:7px; background:#f44; border-radius:50%;
+  display:none; animation:recBlink .8s ease-in-out infinite; flex-shrink:0;
 }
-#rec-header:hover { background:rgba(255,255,255,.04); }
-#rec-dot {
-  width:8px; height:8px; background:#f44; border-radius:50%;
-  display:none; animation:recBlink .8s ease-in-out infinite;
+/* ────────── 議事録フルパネル ────────── */
+#notes-panel {
+  display:none; position:fixed; inset:0; z-index:450;
+  background:rgba(0,0,0,.85); backdrop-filter:blur(12px);
+  align-items:stretch; justify-content:center; padding:18px;
+}
+#notes-panel.visible { display:flex; }
+#notes-box {
+  background:#13111e; border:1px solid rgba(255,255,255,.1);
+  border-radius:18px; width:100%; max-width:920px;
+  display:flex; flex-direction:column; overflow:hidden;
+  animation:goIn .3s cubic-bezier(.175,.885,.32,1.275);
+  box-shadow:0 8px 48px rgba(0,0,0,.6);
+}
+#notes-topbar {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 20px; border-bottom:1px solid rgba(255,255,255,.07);
   flex-shrink:0;
 }
+#rec-dot {
+  width:8px; height:8px; background:#f44; border-radius:50%;
+  display:none; animation:recBlink .8s ease-in-out infinite; flex-shrink:0;
+}
 @keyframes recBlink { 0%,100%{opacity:1} 50%{opacity:.2} }
-#rec-title { font-size:12px; color:rgba(255,255,255,.7); font-weight:bold; flex:1; letter-spacing:.5px; }
 #rec-time { font-size:11px; color:#ff6ec7; font-family:monospace; min-width:38px; }
-#rec-chevron { font-size:10px; color:#555; transition:transform .2s; }
-#rec-panel.collapsed #rec-chevron { transform:rotate(-90deg); }
-#rec-body { padding:10px 12px 12px; }
+#notes-title-input {
+  flex:1; background:transparent; border:none; outline:none;
+  color:#e8e6f0; font-size:15px; font-weight:bold;
+  font-family:'Arial Rounded MT Bold',Arial,sans-serif; letter-spacing:.5px;
+}
+#notes-title-input::placeholder { color:#333; }
+#notes-date-label { font-size:10px; color:#444; flex-shrink:0; letter-spacing:1px; }
+#notes-topbar-actions { display:flex; align-items:center; gap:7px; flex-shrink:0; }
+#rec-start-btn {
+  padding:6px 13px; border-radius:20px; font-size:11px; font-weight:bold;
+  cursor:pointer; border:1px solid rgba(255,80,80,.4);
+  background:rgba(255,80,80,.2); color:#fff; transition:all .15s;
+}
+#rec-start-btn:hover { filter:brightness(1.2); }
+#rec-start-btn.recording { background:rgba(255,80,80,.5); animation:recBlink 1.2s infinite; border-color:rgba(255,80,80,.8); }
+#notes-save-md-btn {
+  padding:6px 13px; border-radius:20px; font-size:11px; font-weight:bold;
+  cursor:pointer; border:1px solid rgba(110,199,255,.35);
+  background:rgba(110,199,255,.15); color:#6ec7ff; transition:all .15s;
+}
+#notes-save-md-btn:hover { background:rgba(110,199,255,.3); }
+#notes-close-btn {
+  padding:5px 12px; border-radius:20px; font-size:11px;
+  cursor:pointer; border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06); color:rgba(255,255,255,.5); transition:all .15s;
+}
+#notes-close-btn:hover { background:rgba(255,255,255,.14); color:#fff; }
+#notes-body { display:flex; flex:1; overflow:hidden; }
+/* 左列：文字起こし */
+#notes-left {
+  width:42%; border-right:1px solid rgba(255,255,255,.07);
+  display:flex; flex-direction:column; padding:16px 18px; overflow:hidden;
+}
+.notes-col-title {
+  font-size:9px; color:#555; letter-spacing:2.5px; text-transform:uppercase;
+  margin-bottom:8px; font-weight:bold;
+}
 #interim-text {
-  font-size:10px; color:#888; font-style:italic; min-height:14px;
-  margin-bottom:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  font-size:10px; color:#666; font-style:italic; min-height:14px;
+  margin-bottom:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 #transcript-area {
-  width:100%; height:90px; background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08); border-radius:8px;
-  color:rgba(255,255,255,.75); font-size:10px; line-height:1.6;
-  padding:7px 8px; resize:none; outline:none; margin-bottom:8px;
-  font-family:'Courier New',monospace;
+  flex:1; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
+  border-radius:10px; color:rgba(255,255,255,.65); font-size:11px; line-height:1.8;
+  padding:10px 12px; resize:none; outline:none; margin-bottom:10px;
+  font-family:'Courier New',monospace; width:100%;
 }
-#rec-actions { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:6px; }
-.rec-btn {
-  padding:6px 0; border-radius:8px; font-size:11px; font-weight:bold;
+#transcript-area:focus { border-color:rgba(110,199,255,.3); }
+#notes-left-actions { display:flex; gap:6px; flex-shrink:0; }
+.notes-action-btn {
+  flex:1; padding:7px 0; border-radius:8px; font-size:10px; font-weight:bold;
   cursor:pointer; border:none; transition:all .15s; color:#fff;
 }
-.rec-btn:hover { filter:brightness(1.2); }
-#rec-start-btn { background:rgba(255,80,80,.25); border:1px solid rgba(255,80,80,.4); grid-column:1/-1; }
-#rec-start-btn.recording { background:rgba(255,80,80,.45); animation:recBlink 1.2s infinite; }
-#rec-copy-btn  { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); }
-#rec-save-btn  { background:rgba(110,199,255,.15); border:1px solid rgba(110,199,255,.3); }
+.notes-action-btn:hover { filter:brightness(1.2); }
+#rec-copy-btn  { background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.12); }
 #rec-audio-btn { background:rgba(255,110,199,.12); border:1px solid rgba(255,110,199,.25); }
-#rec-hint { font-size:9px; color:#444; text-align:center; }
+#rec-hint { font-size:9px; color:#383838; text-align:center; margin-top:7px; }
+/* 右列：メモ */
+#notes-right {
+  flex:1; display:flex; flex-direction:column; overflow-y:auto;
+  padding:16px 20px; gap:14px;
+}
+.notes-section { display:flex; flex-direction:column; }
+.notes-section.grow { flex:1; display:flex; flex-direction:column; }
+.notes-sec-label {
+  font-size:9px; font-weight:bold; color:#555; letter-spacing:2.5px;
+  text-transform:uppercase; margin-bottom:6px;
+}
+.notes-textarea {
+  background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07);
+  border-radius:10px; color:rgba(255,255,255,.82); font-size:12px; line-height:1.9;
+  padding:10px 14px; resize:none; outline:none;
+  font-family:'Arial Rounded MT Bold',Arial,sans-serif; transition:border-color .15s;
+  width:100%;
+}
+.notes-textarea:focus { border-color:rgba(255,110,199,.35); }
+#notes-decisions { min-height:85px; }
+#notes-todos    { min-height:85px; }
+#notes-memo     { flex:1; min-height:110px; }
 
 /* ────────── 先生が来た！ボタン ────────── */
 #boss-btn {
@@ -416,24 +487,53 @@ canvas { cursor:none; border-radius:14px; display:block; }
 <!-- ランキングボタン -->
 <button id="ranking-btn" onclick="showRanking()">🏆 ランキング</button>
 
-<!-- 録音パネル -->
-<div id="rec-panel">
-  <div id="rec-header" onclick="toggleRecPanel()">
-    <span id="rec-dot"></span>
-    <span id="rec-title">🎙 授業録音</span>
-    <span id="rec-time">00:00</span>
-    <span id="rec-chevron">▼</span>
-  </div>
-  <div id="rec-body">
-    <div id="interim-text">マイクの音声がここに表示されます</div>
-    <textarea id="transcript-area" readonly placeholder="録音開始すると文字起こしが始まります&#10;（Chrome推奨）"></textarea>
-    <div id="rec-actions">
-      <button class="rec-btn" id="rec-start-btn" onclick="toggleRecording()">🎙 録音開始</button>
-      <button class="rec-btn" id="rec-copy-btn" onclick="copyTranscript()">📋 コピー</button>
-      <button class="rec-btn" id="rec-save-btn" onclick="downloadNote()">💾 ノート保存</button>
-      <button class="rec-btn" id="rec-audio-btn" onclick="downloadAudio()">🔈 音声保存</button>
+<!-- 議事録ミニボタン -->
+<div id="rec-mini" onclick="openNotesPanel()">
+  <span id="rec-mini-dot"></span>
+  <span id="rec-mini-label">📋 議事録</span>
+  <span id="rec-mini-time"></span>
+</div>
+
+<!-- 議事録フルパネル -->
+<div id="notes-panel">
+  <div id="notes-box">
+    <div id="notes-topbar">
+      <span id="rec-dot"></span>
+      <span id="rec-time">00:00</span>
+      <input id="notes-title-input" placeholder="タイトル（例: 2026-03-10 週次MTG）" />
+      <span id="notes-date-label"></span>
+      <div id="notes-topbar-actions">
+        <button id="rec-start-btn" onclick="toggleRecording()">🎙 録音開始</button>
+        <button id="notes-save-md-btn" onclick="saveNotesMd()">💾 Markdown</button>
+        <button id="notes-close-btn" onclick="closeNotesPanel()">✕ 閉じる</button>
+      </div>
     </div>
-    <div id="rec-hint">文字起こしはChromeのみ対応</div>
+    <div id="notes-body">
+      <div id="notes-left">
+        <div class="notes-col-title">🎙 文字起こし</div>
+        <div id="interim-text">録音を開始すると文字起こしが表示されます</div>
+        <textarea id="transcript-area" readonly placeholder="録音開始すると文字起こしが始まります（Chrome推奨）"></textarea>
+        <div id="notes-left-actions">
+          <button class="notes-action-btn" id="rec-copy-btn" onclick="copyTranscript()">📋 コピー</button>
+          <button class="notes-action-btn" id="rec-audio-btn" onclick="downloadAudio()">🔈 音声保存</button>
+        </div>
+        <div id="rec-hint">文字起こしはChromeのみ対応</div>
+      </div>
+      <div id="notes-right">
+        <div class="notes-section">
+          <div class="notes-sec-label">📌 決定事項</div>
+          <textarea class="notes-textarea" id="notes-decisions" placeholder="・"></textarea>
+        </div>
+        <div class="notes-section">
+          <div class="notes-sec-label">✅ TODO</div>
+          <textarea class="notes-textarea" id="notes-todos" placeholder="・担当者名: タスク内容"></textarea>
+        </div>
+        <div class="notes-section grow">
+          <div class="notes-sec-label">📝 メモ・気づき</div>
+          <textarea class="notes-textarea" id="notes-memo" placeholder="自由記述"></textarea>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1606,7 +1706,10 @@ async function startRecording(){
     }
     isRecording=true; recStartTime=Date.now();
     recInterval=setInterval(()=>{
-      document.getElementById('rec-time').textContent=fmt(Date.now()-recStartTime);
+      const t=fmt(Date.now()-recStartTime);
+      document.getElementById('rec-time').textContent=t;
+      const mt=document.getElementById('rec-mini-time');
+      if(mt) mt.textContent=t;
     },500);
     updateRecUI();
   } catch(e){
@@ -1631,13 +1734,21 @@ function updateTranscriptDisplay(){
 }
 function updateRecUI(){
   const dot=document.getElementById('rec-dot');
+  const miniDot=document.getElementById('rec-mini-dot');
   const btn=document.getElementById('rec-start-btn');
   dot.style.display=isRecording?'block':'none';
+  if(miniDot) miniDot.style.display=isRecording?'block':'none';
   btn.textContent=isRecording?'⏹ 録音停止':'🎙 録音開始';
-  btn.className=isRecording?'rec-btn recording':'rec-btn';
+  btn.className=isRecording?'recording':'';
 }
-function toggleRecPanel(){
-  document.getElementById('rec-panel').classList.toggle('collapsed');
+function openNotesPanel(){
+  const d=new Date();
+  const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('notes-date-label').textContent=ds;
+  document.getElementById('notes-panel').classList.add('visible');
+}
+function closeNotesPanel(){
+  document.getElementById('notes-panel').classList.remove('visible');
 }
 function copyTranscript(){
   if(!transcript){ alert('文字起こしがまだありません'); return; }
@@ -1646,12 +1757,23 @@ function copyTranscript(){
     b.textContent='✅ コピー済'; setTimeout(()=>b.textContent='📋 コピー',1500);
   });
 }
-function downloadNote(){
-  const d=new Date(), ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  const content=`# 授業メモ ${ds}\n\n${transcript||'（文字起こしなし）'}`;
+function saveNotesMd(){
+  const d=new Date();
+  const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const title=document.getElementById('notes-title-input').value.trim()||`議事録 ${ds}`;
+  const decisions=document.getElementById('notes-decisions').value.trim()||'（なし）';
+  const todos=document.getElementById('notes-todos').value.trim()||'（なし）';
+  const memo=document.getElementById('notes-memo').value.trim();
+  const lines=[
+    `# ${title}`,``,`日付: ${ds}`,``,
+    `## 📌 決定事項`,decisions,``,
+    `## ✅ TODO`,todos,``,
+  ];
+  if(memo) lines.push(`## 📝 メモ・気づき`,memo,``);
+  if(transcript) lines.push(`## 🎙 文字起こし`,transcript);
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type:'text/plain;charset=utf-8'}));
-  a.download=`lecture-note-${ds}.txt`; a.click();
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'}));
+  a.download=`${title}.md`; a.click();
 }
 function downloadAudio(){
   if(!audioChunks.length){ alert('録音データがありません'); return; }
