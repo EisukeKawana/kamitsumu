@@ -55,20 +55,65 @@ body {
   transition:width .2s ease;
   box-shadow:0 0 8px #ff6ec7;
 }
-canvas { cursor:none; border-radius:14px; }
+canvas { cursor:none; border-radius:14px; display:block; }
+#canvas-wrap { position:relative; display:inline-block; }
 #mute { position:fixed; top:10px; right:14px; background:rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.15); color:#fff; padding:5px 10px;
   border-radius:20px; cursor:pointer; font-size:14px; }
 #mute:hover { background:rgba(255,255,255,.15); }
 #shuffle-btn {
-  position:fixed; top:10px; right:78px;
-  background:rgba(110,199,255,.12); border:1px solid rgba(110,199,255,.3);
-  color:#6ec7ff; padding:5px 14px; border-radius:20px;
-  cursor:pointer; font-size:13px; font-weight:bold;
-  transition:all .2s; letter-spacing:1px;
+  position:absolute; bottom:8px; right:8px;
+  background:rgba(110,199,255,.18); border:1px solid rgba(110,199,255,.4);
+  color:#6ec7ff; padding:5px 12px; border-radius:16px;
+  cursor:pointer; font-size:12px; font-weight:bold;
+  transition:all .2s; letter-spacing:.5px; z-index:10;
 }
-#shuffle-btn:hover:not(:disabled) { background:rgba(110,199,255,.28); }
-#shuffle-btn:disabled { opacity:.35; cursor:default; }
+#shuffle-btn:hover:not(:disabled) { background:rgba(110,199,255,.35); }
+#shuffle-btn:disabled { opacity:.3; cursor:default; }
+/* アイテムバー */
+#item-bar {
+  display:flex; gap:8px; margin-top:7px; justify-content:center;
+}
+.item-btn {
+  padding:6px 14px; border-radius:14px; font-size:12px; font-weight:bold;
+  cursor:pointer; border:none; transition:all .18s; color:#fff; letter-spacing:.5px;
+}
+.item-btn:hover:not(:disabled) { transform:scale(1.05); filter:brightness(1.2); }
+.item-btn:disabled { opacity:.3; cursor:default; }
+#item-bomb { background:rgba(255,68,68,.25); border:1px solid rgba(255,68,68,.5); }
+#item-gold { background:rgba(255,215,0,.2);  border:1px solid rgba(255,215,0,.45); }
+#item-clock { background:rgba(110,199,255,.2); border:1px solid rgba(110,199,255,.45); }
+/* フィードバックパネル */
+#feedback-btn {
+  position:fixed; bottom:72px; right:16px; z-index:300;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.55); padding:7px 12px; border-radius:16px;
+  font-size:11px; cursor:pointer; transition:all .2s;
+}
+#feedback-btn:hover { background:rgba(255,255,255,.14); color:#fff; }
+#feedback-panel {
+  display:none; position:fixed; inset:0; z-index:500;
+  background:rgba(0,0,0,.88); backdrop-filter:blur(10px);
+  align-items:center; justify-content:center;
+}
+#feedback-panel.visible { display:flex; }
+#feedback-box {
+  background:linear-gradient(145deg,rgba(10,8,24,.98),rgba(20,5,35,.98));
+  border:1px solid rgba(110,199,255,.3); border-radius:20px;
+  padding:0; width:480px; max-height:85vh; overflow:hidden;
+  animation:goIn .3s cubic-bezier(.175,.885,.32,1.275);
+  display:flex; flex-direction:column;
+}
+#feedback-header {
+  padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+#feedback-header h2 { color:#6ec7ff; font-size:14px; letter-spacing:2px; }
+#feedback-close {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  color:#fff; padding:4px 10px; border-radius:10px; font-size:12px; cursor:pointer;
+}
+#feedback-iframe { flex:1; border:none; min-height:520px; }
 #hook-copy { font-size:11px; color:rgba(255,255,255,.42); text-align:center; letter-spacing:2px; margin-bottom:5px; }
 #coin-display { font-size:12px; color:#ffd700; text-align:center; margin-bottom:3px; letter-spacing:1px; }
 #gameover-ui {
@@ -319,9 +364,16 @@ canvas { cursor:none; border-radius:14px; }
 </div>
 <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
 <div id="fever-bar-wrap"><div id="fever-bar"></div></div>
-<canvas id="canvas" width="420" height="500"></canvas>
+<div id="canvas-wrap">
+  <canvas id="canvas" width="420" height="500"></canvas>
+  <button id="shuffle-btn" onclick="doShuffle()">🔀 シャッフル</button>
+</div>
+<div id="item-bar">
+  <button class="item-btn" id="item-bomb"  onclick="activateItem('bomb')" title="💣 全消し">💣 BOMB（💰50,000）</button>
+  <button class="item-btn" id="item-gold"  onclick="activateItem('gold')" title="💰 コイン大量獲得">💰 GOLD（💰50,000）</button>
+  <button class="item-btn" id="item-clock" onclick="activateItem('clock')" title="⏰ 時間+10秒">⏰ +TIME（💰50,000）</button>
+</div>
 <button id="mute">🔊</button>
-<button id="shuffle-btn" onclick="doShuffle()">🔀 シャッフル</button>
 
 <div id="gameover-ui">
   <div id="go-label">GAME OVER</div>
@@ -387,6 +439,20 @@ canvas { cursor:none; border-radius:14px; }
 
 <!-- 先生が来た！ボタン -->
 <button id="boss-btn" onclick="activateBossMode()">🚨 先生が来た！</button>
+
+<!-- ご意見箱 -->
+<button id="feedback-btn" onclick="showFeedback()">📮 ご意見箱</button>
+<div id="feedback-panel">
+  <div id="feedback-box">
+    <div id="feedback-header">
+      <h2>📮 ご意見・改善依頼</h2>
+      <button id="feedback-close" onclick="hideFeedback()">✕ 閉じる</button>
+    </div>
+    <iframe id="feedback-iframe"
+      src="https://docs.google.com/forms/d/e/PLACEHOLDER/viewform?embedded=true"
+      frameborder="0" marginheight="0" marginwidth="0">読み込み中…</iframe>
+  </div>
+</div>
 
 <!-- 偽ノートアプリ画面 -->
 <div id="boss-screen">
@@ -524,6 +590,7 @@ const SPECIALS={
   bomb:  {emoji:'💣',color:'#ff4444',dark:'#aa0000',light:'#ffd0d0'},
   rainbow:{emoji:'🌈',color:'#ffffff',dark:'#aaaaaa',light:'#ffffff'},
   gold:  {emoji:'💰',color:'#ffd700',dark:'#b8860b',light:'#fffacc'},
+  clock: {emoji:'⏰',color:'#6ec7ff',dark:'#1971c2',light:'#cceeff'},
 };
 // ニアミス閾値（Clark et al. 2009 ニアミス効果）
 const COMBO_THRESHOLDS=[{n:3,name:'NICE'},{n:5,name:'GREAT'},{n:8,name:'AMAZING'},{n:12,name:'INCREDIBLE'},{n:18,name:'GODLIKE'},{n:25,name:'DIVINE'}];
@@ -595,22 +662,15 @@ function drawBG() {
   bg.addColorStop(0,`hsl(${h1},70%,${rushTime?8:5}%)`);
   bg.addColorStop(1,`hsl(${h2},80%,${rushTime?4:3}%)`);
   ctx.fillStyle=bg; ctx.roundRect(0,0,W,H,14); ctx.fill();
-  [{x:80,y:200,r:120,h:60},{x:340,y:150,r:100,h:220},{x:200,y:380,r:90,h:160}].forEach(n=>{
-    const a=.04+Math.sin(t+n.x)*.015;
-    const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,n.r);
-    const hue=rushTime?30:(fever?280:n.h);
-    g.addColorStop(0,`hsla(${hue},80%,40%,${a})`);
-    g.addColorStop(1,`hsla(${hue},80%,40%,0)`);
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.fill();
-  });
+  // ネビュラ削除（Windows向け軽量化）
+  // 星: shadowBlur廃止（軽量化）、偶数フレームのみ輝度更新
   stars.forEach(s=>{
-    const a=Math.max(.05,.4+Math.sin(s.tw)*.5);
-    ctx.save(); ctx.globalAlpha=a;
-    if(s.r>1.2){ctx.shadowColor='#fff';ctx.shadowBlur=4;}
+    const a=Math.max(.05,.35+Math.sin(s.tw)*.35);
+    ctx.globalAlpha=a;
     ctx.fillStyle=rushTime?'#ffcc66':s.layer===2?'#aaddff':'#ffffff';
     ctx.beginPath(); ctx.arc(s.x,s.y,s.r*(rushTime?1.5:1),0,Math.PI*2); ctx.fill();
-    ctx.restore();
   });
+  ctx.globalAlpha=1;
   // RUSH TIME 警告ライン
   if(rushTime){
     ctx.save();
@@ -632,9 +692,10 @@ function targetY(row){return PAD_Y+row*R*1.8;}
 function makeTsum(col,row,fromTop){
   const rnd=Math.random();
   let special=null;
-  if(rnd<SPECIAL_P*.35) special='bomb';
-  else if(rnd<SPECIAL_P*.65) special='rainbow';
-  else if(rnd<SPECIAL_P) special='gold';
+  if(rnd<SPECIAL_P*.25)       special='bomb';
+  else if(rnd<SPECIAL_P*.5)   special='rainbow';
+  else if(rnd<SPECIAL_P*.75)  special='gold';
+  else if(rnd<SPECIAL_P)      special='clock';
   return {
     type:Math.floor(Math.random()*TSUMS.length),special,col,row,
     vy:0, visualY:fromTop?targetY(row)-260-Math.random()*140:targetY(row),
@@ -835,9 +896,35 @@ function commitChain(){
     chain=[]; chainType=-1; return;
   }
 
+  // 特殊ツム効果
+  const hasBomb=chain.some(t=>t.special==='bomb');
+  const hasGold=chain.some(t=>t.special==='gold');
+  const hasClock=chain.some(t=>t.special==='clock');
+  // 💣 BOMB: チェーンに含まれると全ツムを一掃
+  if(hasBomb){
+    setTimeout(()=>{
+      const all=[...tsums.filter(t=>!t.dying)];
+      warBurst(all.slice(0,12),all.length);
+      all.forEach(t=>t.dying=true);
+      setTimeout(()=>{tsums=[];initGrid();},120);
+    },60);
+    showMsg('💣 BOMB!! 全消し！','#ff4444');
+    shakeMag=35; flashAlpha=.85;
+  }
+  // 💰 GOLD: コイン大量ボーナス
+  if(hasGold){
+    const bonus=Math.floor(500+Math.random()*1000);
+    coins+=bonus; localStorage.setItem('kamitsumu_coins',coins);
+    document.getElementById('coin-display').textContent=`💰 ${coins}`;
+    floatTexts.push({x:W/2,y:H*.25,text:`💰 +${bonus}コイン！`,life:80,maxLife:80,vy:-1.5,scale:1.2,color:'#ffd700'});
+    updateItemBar();
+  }
+  // ⏰ CLOCK: 時間+3秒
+  if(hasClock){ addTime(3); floatTexts.push({x:W/2,y:H*.28,text:'⏰ +3秒！',life:70,maxLife:70,vy:-1.5,scale:1.1,color:'#6ec7ff'}); }
+
   // 基本スコア計算
   let m=mult*(rushTime?5:1)*(fever?(hyperFever?3:2):1);
-  const hasStar=chain.some(t=>t.special==='gold'); if(hasStar) m*=2;
+  if(hasGold) m*=2;
   let pts=Math.floor(len*len*12*m);
 
   // DOPAMINE: JACKPOT ロール（Schultz予測誤差）
@@ -1043,14 +1130,11 @@ function update(){
   dispScore+=(score-dispScore)*.13;
   document.getElementById('score').textContent=Math.floor(dispScore).toLocaleString();
 
-  // カーソルトレイル（Berridge: 感覚的強度が欲求を高める）
-  if(chain.length>0){
-    for(let i=0;i<4;i++){
-      const c=chainType>=0?TSUMS[chainType].color:'#fff';
-      trailPts.push({x:mouseX+(Math.random()-.5)*8,y:mouseY+(Math.random()-.5)*8,
-        vx:(Math.random()-.5)*1.5,vy:-.5-Math.random(),
-        life:16+Math.random()*12,maxLife:28,color:c,size:3+Math.random()*4});
-    }
+  // カーソルトレイル（軽量化: 4→1個）
+  if(chain.length>0&&frame%2===0){
+    const c=chainType>=0?TSUMS[chainType].color:'#fff';
+    trailPts.push({x:mouseX,y:mouseY,vx:0,vy:-.5,
+      life:14,maxLife:14,color:c,size:3,type:'spark'});
   }
 
   // パーティクル更新
@@ -1155,17 +1239,17 @@ function drawTsum(t){
   ctx.fillText(info.emoji,0,2); ctx.restore();
 }
 function drawParticles(){
+  // shadowBlur廃止（Windows向け軽量化 - 最大の描画コスト削減）
   [...trailPts,...particles].forEach(p=>{
     const r=p.life/p.maxLife; ctx.save(); ctx.globalAlpha=Math.max(0,r);
     if(p.type==='smoke'){
-      ctx.globalAlpha=r*.4; ctx.fillStyle=p.color;
-      ctx.beginPath(); ctx.arc(p.x+shakeX,p.y+shakeY,p.size*(1.3-r*.3),0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=r*.35; ctx.fillStyle=p.color;
+      ctx.beginPath(); ctx.arc(p.x+shakeX,p.y+shakeY,p.size*(1.2-r*.2),0,Math.PI*2); ctx.fill();
     } else if(p.type==='debris'){
       ctx.translate(p.x+shakeX,p.y+shakeY); ctx.rotate(p.rot||0);
-      ctx.fillStyle=p.color; ctx.shadowColor=p.color; ctx.shadowBlur=6;
+      ctx.fillStyle=p.color;
       ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
     } else {
-      ctx.shadowColor=p.color; ctx.shadowBlur=p.type==='flame'?14:6;
       ctx.fillStyle=p.color;
       ctx.beginPath(); ctx.arc(p.x+shakeX,p.y+shakeY,p.size*(p.type==='flame'?r:1),0,Math.PI*2); ctx.fill();
     }
@@ -1177,8 +1261,7 @@ function drawShockwaves(){
     if(s.delay>0) return;
     const r=s.life/s.maxLife;
     ctx.save(); ctx.globalAlpha=r*s.alpha;
-    ctx.strokeStyle=s.color; ctx.lineWidth=4*r;
-    ctx.shadowColor=s.color; ctx.shadowBlur=18;
+    ctx.strokeStyle=s.color; ctx.lineWidth=3*r;
     ctx.beginPath(); ctx.arc(s.x+shakeX,s.y+shakeY,s.radius,0,Math.PI*2); ctx.stroke();
     ctx.restore();
   });
@@ -1189,7 +1272,7 @@ function drawFloatTexts(){
     ctx.save(); ctx.globalAlpha=Math.min(1,r*2);
     ctx.translate(ft.x+shakeX,ft.y+shakeY); ctx.scale(ft.scale,ft.scale);
     ctx.font='bold 22px Arial'; ctx.textAlign='center';
-    ctx.fillStyle=ft.color||'#ffd700'; ctx.shadowColor=ft.color||'#fa0'; ctx.shadowBlur=14;
+    ctx.fillStyle=ft.color||'#ffd700';
     ctx.fillText(ft.text,0,0); ctx.restore();
   });
 }
@@ -1198,7 +1281,7 @@ function drawComboAnim(){
   ctx.save(); ctx.globalAlpha=Math.max(0,comboAnim.alpha);
   ctx.translate(W/2+shakeX,comboAnim.y+shakeY); ctx.scale(comboAnim.scale,comboAnim.scale);
   ctx.font='bold 40px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillStyle=comboAnim.color; ctx.shadowColor=comboAnim.color; ctx.shadowBlur=35;
+  ctx.fillStyle=comboAnim.color;
   ctx.fillText(comboAnim.text,0,0); ctx.restore();
 }
 function drawRainbow(){
@@ -1681,6 +1764,44 @@ async function submitScore(s,t){
     error ? '⚠ 送信失敗（オフライン？）' : '✓ ランキングに登録しました';
 }
 
+// ════════════════════════════════════════
+// アイテム発動（コイン50,000消費）
+// ════════════════════════════════════════
+const ITEM_COST=50000;
+function updateItemBar(){
+  const ok=coins>=ITEM_COST&&!gameOver;
+  ['item-bomb','item-gold','item-clock'].forEach(id=>{
+    document.getElementById(id).disabled=!ok;
+  });
+}
+function activateItem(type){
+  if(coins<ITEM_COST||gameOver) return;
+  coins-=ITEM_COST; localStorage.setItem('kamitsumu_coins',coins);
+  document.getElementById('coin-display').textContent=`💰 ${coins}`;
+  updateItemBar();
+  if(type==='bomb'){
+    const all=tsums.filter(t=>!t.dying);
+    warBurst(all.slice(0,12),all.length);
+    all.forEach(t=>t.dying=true);
+    setTimeout(()=>{tsums=[];initGrid();},120);
+    showMsg('💣 BOMB ITEM！全消し！','#ff4444');
+    shakeMag=35; flashAlpha=.85; playBoom(25);
+  } else if(type==='gold'){
+    const bonus=3000+Math.floor(Math.random()*2000);
+    score+=bonus;
+    floatTexts.push({x:W/2,y:H*.3,text:`💰 GOLD +${bonus}pts！`,life:90,maxLife:90,vy:-2,scale:1.4,color:'#ffd700'});
+    showMsg('💰 GOLD ITEM！','#ffd700'); playJackpot();
+  } else if(type==='clock'){
+    addTime(10);
+    floatTexts.push({x:W/2,y:H*.3,text:'⏰ TIME +10秒！',life:80,maxLife:80,vy:-2,scale:1.3,color:'#6ec7ff'});
+    showMsg('⏰ TIME ITEM！','#6ec7ff'); playRushStart();
+  }
+}
+
+// フィードバックパネル
+function showFeedback(){ document.getElementById('feedback-panel').classList.add('visible'); }
+function hideFeedback(){ document.getElementById('feedback-panel').classList.remove('visible'); }
+
 function _esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 async function showRanking(){
@@ -1696,7 +1817,7 @@ async function showRanking(){
   }
   const best={};
   data.forEach(r=>{if(!best[r.username]||r.score>best[r.username].score) best[r.username]=r;});
-  const top=Object.values(best).sort((a,b)=>b.score-a.score).slice(0,20);
+  const top=Object.values(best).sort((a,b)=>b.score-a.score).slice(0,50);
 
   if(!top.length){
     document.getElementById('ranking-list').innerHTML='<div style="text-align:center;color:#555;padding:24px">まだスコアがありません<br>あなたが1位になるチャンス！</div>';
@@ -1726,7 +1847,7 @@ function hideRanking(){
 // ════════════════════════════════════════
 // START
 // ════════════════════════════════════════
-initStars(); initGrid(); updateUI(); startTimer(); render(); initPlayer();
+initStars(); initGrid(); updateUI(); startTimer(); render(); initPlayer(); updateItemBar();
 </script>
 </body>
 </html>
